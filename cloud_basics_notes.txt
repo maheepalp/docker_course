@@ -1,0 +1,75 @@
+1) EC2 - Elastic Cloud computing ECC is a virutual server running on AWS infrastructure. Simply a server/hardware box
+2) Load balancer - ELB Elastic Load Balancer
+3) ASG - Automatic scaling group
+
+regions and zones
+
+Managed services -> Elastic Beans talk
+
+
+
+VM > OS > App runtime (jre etc) > code ==> container image
+
+Elastic beans talk toakes container image and manage everything
+
+If you have single and smallr services (container images) Elastic beans talk is simple solution. A managed service.
+
+But lot of microservices, orchestration service better go with Kubernetes called EKS - Elastic Kubernetes Service
+
+ECS is elastic container service is simlar to EKS but prior aws own orchestration service. Now AWS support both ECS/EKS
+
+Serverless - give a piece of code to aws ask to manage for 10 req or 10K reqs. AWS lambda handles it
+
+========
+Managed compute services vs Managed database services
+
+Relational DB / SQL -RDS (Relation database services, is Amazon managed database service
+
+
+NoSQL - consistance is not so important, but sclability is high. could be little bit out of sync between regions, but instantaniously avaiable. millions of tx per sec like social media
+DynamoDB is NOSQL but document based DB json objects
+
+Analytics database - BI - reporting data - redshift - huge huge amound of data 
+AWS REDSHIFT, HADOOP
+
+AWS DATA PIPELINES - similar to ETL loading from transactional db to analytical DB
+ 
+--------
+Amazon Elastic block store - EBS is like harddisc, you can attach your EC2 instance. To store any type data
+EFS is elastic file store - file system
+
+EBS / EFS can be plugged and shared between multiple EC2 instances
+
+Object storage - buckets with key value data. video/audio bigger size. Rest api to pull the value with key. Static website. S3 is simple storage service. Used for front end Route53 is domain naming service by amazon. Cloud frontend
+=========
+security
+
+VPC - virtual private cloud
+private and public subnet
+configure what is allow access / not.
+
+managed VPN virutualprivate network, is to conenct over internet a private data center on premice to talk to a private subnet/VPC database
+Instead, we can have a "direct connect" rather going through internet and vpn
+
+
+================
+Queueing services
+Amazon SQS simple queue service
+===================
+DevOps
+
+CI/CD - aws PIPELINES aws code build/code deploy
+
+infrastructure as code. -provisioning infrastructure - cloud formation (older style complex script), Terraform, CDK
+						-configuration management - AWS ops-works. 
+
+observability
+AWS tracing - tracing, 
+AWS cloud watch - logs and metrix 
+
+azure az900
+cloud practitioner
+
+
+
+

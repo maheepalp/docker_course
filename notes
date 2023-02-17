@@ -1,0 +1,327 @@
+why docker?
+
+code vs runtime environemtn
+isolation and security
+
+Bare metal (just hardware) to VMs
+
+Provisiong physical hardware is old school
+
+VMs are good. But it has capabilities of runnning a OS. We no need of full OS. Full OS comes with extra baggage of maintances/pathes install/ licensing costs etc
+We just need to be able to run processes in isolation. Thats where containers comes in picutre
+
+such things already there in Linux OS with different tools/technologies like below
+1) chroot - file isolation
+2) namespaces - resource isolation
+3) control groups - similar to namespaces resource isolation more on memory cpu
+
+containers vs images
+
+Images are classes can be downloaded from https://hub.docker.com/search?q=
+once image installed, run it and is called container. Like an object
+
+donwload install
+docker pull alpine
+or docker pull alpine:3.14.3
+
+to run
+docker run alpine <process>
+docker run alpine ls
+As soon as process finish, docker exits the container.
+to keep it running use -it 
+
+docker run -it alpine sh
+"-it" meaning interactive terminal
+below command gives all containers running/exited
+docker ps -a
+
+===
+to have a container with java instelled
+
+docker run -it openjdk bash
+
+bash is a command prompt
+jshell is a shell where you can execute java statements. Like System.out.println etc
+Pretty cool
+============
+
+docker run can take params to decide how many cpu, how much memory can be allocated to that process. 
+
+each docker run creates a new container, which are completely isolated, no sharing. 
+
+"docker save" creates an image (?)
+
+"docker ps" gives list of running instances and ID. the id can be used to send commands like stop/kill etc
+docker stop <instance id>
+with docker -name attribute allocates a name to contactiner for further reference/monitering.
+"docker rm" is remove the container. Running containers cannot be removed. 
+
+a stopped container can be started again, with docker start. The file structure/state regains back to normal.
+
+run = create + start
+once stopped can be started with exec (?)
+
+exec is another terminal of running container
+
+-d is an option to run background for httpd
+
+run --rm option will remove as soon as its exited
+
+stop will stop a running container
+
+start will start a stopped container
+to join started container OR to have another shell on a started container
+
+docker exec -it c9b603d37731 sh	
+
+rm will remove a stopped container
+====================
+
+MY SQL
+
+docker run --name mp-mysql-name -e MYSQL_ROOT_PASSWORD=secret -d mysql
+-e set env variable
+-d run in background
+
+
+=============
+
+-v option is volume 
+
+docker run --rm -it -v C:\temp:/hostvol alpine sh
+cd to hostvol, create a file with text
+exited
+in host c:\temp you can see the file
+
+=========
+
+writing java code without jdk
+
+C:\temp>docker run --rm -it -v C:\temp:/javacode openjdk sh
+cd /javacode
+javac Hello.java
+java Hello
+===========
+docker volumes (-v)
+
+docker volume create new-vol
+docker volume ls
+docker volume inspect new-vol
+docker run --rm -it -v new-vol:/vol-c1 alpine sh
+	 touch /vol-c1/from-vol-c1.txt
+	 exit
+docker run --rm -it -v new-vol:/vol-c2 alpine sh	 
+	 touch /vol-c2/from-vol-c2.txt
+	 ls (shows file from earlier container. Folder shared between containers)
+	 exit
+
+docker volume rm new-vol
+============
+Port forwarding (-p)
+
+docker run --rm -p 8080:80 -d nginx
+
+-p HostPort:containerPort
+nginx runs on 80 default
+http://localhost:8080/
+
+====================
+ARCHITECTURE
+
+A client makes grpc call to docker deamon
+docker deamon calls containerD, whose job is download image if not avable
+containerD calls CallC to start the container.
+Once container started, CallC is passes the container to Shim, which is light weight component keep container up
+===========================================
+"docker images" >gives all the images that downloaded.
+
+docker rmi <image> will remove image (RMI). If a container is running we cannot remove that image.
+
+"docker inspect image openjdk" will give json presentation of image layers (dependencies)
+
+"docker compose" is a way of scripting to be able to start multiple dockers instances together.
+=======================
+
+"docker ps" is same as "docker container"
+"docker ps -a" is same as "docker container -a"
+
+======================
+creating images
+
+docker run -it alpine sh
+	 # echo "hello world" > hello.txt
+	 # exit
+
+docker ps -a
+(take the name)
+docker commit <name> my_alpine
+docker run -it my_alpine sh
+(you will see hello.txt already there avbl)
+===============
+DOCKER FILE - solution for golden image problem
+
+docker build -t my-image .
+(look for Dockerfile in the current dir, and create an image name my-image. Later another container can be created from image my-image)
+docker run --rm -it my-image
+
+example Dockerfile
+
+FROM alpine
+RUN mkdir code; \
+    cd code; \
+    echo "maheepal" > mp.txt; \
+    cd /;
+WORKDIR /code
+RUN touch newfile.txt
+
+FROM openjdk
+RUN mkdir code
+WORKDIR code
+COPY Hello.java .
+RUN javac Hello.java
+CMD echo "Welome"; \
+     java Hello
+(there can be only 1 CMD. )	 
+================
+RUN vs CMD
+
+RUN is at the time of image creation
+CMD is at the time of container creation. Like a welcome message as soon as container created. 
+
+
+Best practice for dockerfile is to pass as json object rather, command/value
+
+FROM openjdk
+RUN mkdir code
+WORKDIR code
+COPY ["Hello.java","."]
+RUN ["javac","Hello.java"]
+CMD ["java","Hello"]
+
+========
+ENTRYPOINT
+
+to pass command line param to the CMD use ENTRYPOINT. 
+FROM openjdk
+RUN mkdir code
+WORKDIR /code
+COPY ["Hello.java","."]
+RUN ["javac","Hello.java"]
+ENTRYPOINT ["java","Hello"]
+
+docker run --rm my-image maheepal
+
+==============
+OTHER DOCKERFILE COMMANDS
+
+"MAINTAINER" is author name. just for documentation
+
+ADD vs COPY
+
+in case of simple file ADD works same as copy
+but if zip file given, ADD will extracts automatically
+if a file url (github etc) then ADD will download.
+COPY is simple copy
+ENV sets environemtn variable
+EXPOSE 8080 (similar to what we saw above -p option)
+USER xxx (currently logged in user name)
+VOLUME ["path","path"] - similar to -v option saw abvoe. This way, not recommended, as paths can change env to env
+
+==
+everytime we create a new image, it caches the dockerfile. If there is a change at anyone line, it starts evaluating from that line to the bottom.
+========================================================================================
+
+######################    RUNNING A SAMPLE SPRING BOOT APPLICATION IN A DOCKER	   #################
+
+VS code. shift+ctrl+P, spring intializer (Be home personal network)
+select web module
+look at DemoApplication.java. Make it a @RestController and add a method with @RequestMapping and return String.
+to Run  ./mvnw spring-boot:run (mvnw comes with it, which is a wrapper. as I understnad it helps if you don't have local maven)
+
+Call that mapping in browser, see the returned string
+
+to build ./mvnw package
+
+which will generate a jar file in target folder
+
+Then code the dockerfile as below  in root folder
+FROM openjdk
+RUN mkdir /jars
+COPY ./target/*.jar /jars/app.jar
+ENTRYPOINT [ "java","-jar", "app.jar"]
+
+build image
+docker build -t my_springboot_image
+and
+docker run --rm -p 9090:8080 my_springboot_image
+
+http://localhost:9090/ should see hello world
+======================================================
+DOCKER BRIDGE NETWORK
+
+if we server running on 1 container, its not visible to host, unless we do -p port mapping.
+But its automatilly visible to other container.
+inpsect first container where http server is running, look for IP address. Open another container (say busybox, a tool which can do http calls) and make a call to above IP. It can see the resonese
+Example
+docker run --rm -p 80:80 httpd
+docker inspect <name>
+lookfor IP address as 172.17.0.2
+
+docker run --rm -it busybox
+#wget 172.17.0.2
+this will fetch index.html to current folder. Cat index.html should be able to see the html
+===============================
+
+C:\>docker network ls
+NETWORK ID     NAME      DRIVER    SCOPE
+f4d18e8cc8ff   bridge    bridge    local
+9b795e0f76d1   host      host      local
+77d0c43e52c4   none      null      local
+
+these are typical networks. Bridge is default, each container visible to other container
+Host is visible to host. Its not right to use this. But there. 
+none - completely isolated.
+
+we can create own networks as
+docker network create -d bridge mybridge
+
+then start an instance with new network with --net option
+
+docker run -rm --net=mybridge httpd
+
+docker run --rm -it busybox
+wget 172.18.0.2 won't get you index.html as its in defualt netowrk, which is bridge. Where as httpd running on mybridge
+Instead 
+docker run --rm -it --net=mybridge busybox
+can see index.html
+======================================================
+###################### COMPOSE ####################
+you can run mulple run commands via a file called compose, which is an yaml file.
+each container is called a service
+
+
+version:'3'
+services:
+	mongodb:
+		image:mongo
+		ports:
+		 - 27017:27017
+		environment:
+		 - MONGO_INITDB_ROOT_USERNAME=root
+		 - MONGO_INITDB_ROOT_PASSWORD=root
+	redis:
+		image:redis
+		ports:
+		 - 6379:6379
+		environment:
+		 - REDIS_PASSWORD=root
+		 
+========================
+NEXT STEPS...... :)
+
+https://docs.docker.com/
+https://www.docker.com/blog/
+
+https://docs.docker.com/engine/swarm/
+
+https://kubernetes.io/
